@@ -4,8 +4,11 @@
 *.class
 javaconfig.json
 classpath.txt
+.classpath
+.project
 
 # dirs
 
 example/
 .vscode/
+/out/
