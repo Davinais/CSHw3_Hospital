@@ -3,9 +3,8 @@ public class Anesthetist extends MedicalPersonnel
     public Anesthetist()
     {
         //設定最大體力與最大恢復力
-        super(80, 20);
-        job = "麻醉師";
-        isIdle = false;
-        stamina = 80;
+        super("麻醉師", 80, 20, 1);
+        isIdle = true;
+        skills.addSkill("麻醉", -30, 2);
     }
 }
