@@ -4,8 +4,8 @@ public class Nurse extends MedicalPersonnel
     {
         //設定最大體力與最大恢復力
         super("護理師", 90, 20);
-        isIdle = true;
-        addSkills("一般照護", -10, 1);
-        addSkills("手術照護", -30, 3);
+        idle = true;
+        addSkill("一般照護", -10, 1);
+        addSkill("手術照護", -30, 3);
     }
 }
