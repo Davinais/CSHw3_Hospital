@@ -6,7 +6,7 @@ public abstract class MedicalPersonnel
     protected final int STAMINA_MAX, HEALING;
     protected int stamina;
     protected int busyTurn;
-    protected boolean idle, exhausted;
+    protected boolean idle, exhausted, haveExhausted;
     protected HashMap<String, Skill> skills = new HashMap<String, Skill>();
     public MedicalPersonnel(String job, int stamina_max, int healing)
     {
@@ -14,8 +14,11 @@ public abstract class MedicalPersonnel
         STAMINA_MAX = stamina_max;
         HEALING = healing;
         stamina = STAMINA_MAX;
+        idle = true;
+        exhausted = false;
+        haveExhausted = false;
     }
-    public void addSkill(String skillName, int skillStaminaCost, int skillNeededTurn)
+    protected void addSkill(String skillName, int skillStaminaCost, int skillNeededTurn)
     {
         skills.put(skillName, new Skill(skillName, skillStaminaCost, skillNeededTurn));
     }
@@ -42,6 +45,17 @@ public abstract class MedicalPersonnel
     public boolean isIdle()
     {
         return idle;
+    }
+    public void turnOver()
+    {
+        if(idle)
+            staminaRecover();
+        else
+        {
+            busyTurn--;
+            if(busyTurn == 0)
+                idle = true;
+        }
     }
     public int getMaxStamina()
     {

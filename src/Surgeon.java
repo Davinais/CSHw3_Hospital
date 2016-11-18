@@ -4,7 +4,6 @@ public class Surgeon extends MedicalPersonnel
     {
         //設定最大體力與最大恢復力
         super("外科醫生", 100, 30);
-        idle = true;
         addSkill("手術", -50, 3);
         addSkill("看診", -10, 1);
     }
