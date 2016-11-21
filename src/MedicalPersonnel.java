@@ -46,6 +46,15 @@ public abstract class MedicalPersonnel
     {
         return idle;
     }
+    public boolean haveBeenExhausted()
+    {
+        return haveExhausted;
+    }
+    public void setToExhaust()
+    {
+        haveExhausted = true;
+        exhausted = true;
+    }
     public void turnOver()
     {
         if(idle)
