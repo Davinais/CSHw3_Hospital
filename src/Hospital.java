@@ -29,6 +29,10 @@ public class Hospital
         status = recursiveGetStatusString(anesthetists, status);
         System.out.println(status);
     }
+    public int[] getMedicNumber()
+    {
+        return new int[]{surgeons.length, physicians.length, nurses.length, anesthetists.length};
+    }
     public MedicalPersonnel[] getAvaliable(MedicalPersonnel[] medic, int num, String skillName, boolean emergency)
     {
         MedicalPersonnel avaliableMedic[] = new MedicalPersonnel[num];
