@@ -1,4 +1,4 @@
-import java.util.HashMap<K,V>;
+import java.util.HashMap;
 
 public abstract class MedicalPersonnel
 {
@@ -25,7 +25,9 @@ public abstract class MedicalPersonnel
     public boolean enoughStamina(String skillName)
     {
         Skill exe = skills.get(skillName);
-        if(stamina + exe.getStaminaCost() < 0)
+        if(exhausted)
+            return false;
+        else if(stamina + exe.getStaminaCost() < 0)
             return false;
         else
             return true;
@@ -35,6 +37,7 @@ public abstract class MedicalPersonnel
         Skill exe = skills.get(skillName);
         stamina += exe.getStaminaCost();
         busyTurn += exe.getNeededTurn();
+        idle = false;
     }
     public void staminaRecover()
     {
@@ -46,14 +49,34 @@ public abstract class MedicalPersonnel
     {
         return idle;
     }
+    public boolean isExhausted()
+    {
+        return exhausted;
+    }
     public boolean haveBeenExhausted()
     {
         return haveExhausted;
     }
+    public String getStatusString()
+    {
+        if(exhausted)
+            return "透支";
+        else if(idle)
+            return "閒置";
+        else
+            return "忙碌";
+    }
+    public String getJobName()
+    {
+        return job;
+    }
     public void setToExhaust()
     {
-        haveExhausted = true;
-        exhausted = true;
+        if(!haveExhausted)
+        {
+            haveExhausted = true;
+            exhausted = true;
+        }
     }
     public void turnOver()
     {

@@ -20,6 +20,15 @@ public class Hospital
         for(int i=0; i < anesthetist_num; i++)
             anesthetists[i] = new Anesthetist();
     }
+    public void printStatus()
+    {
+        String status = "";
+        status = recursiveGetStatusString(surgeons, status);
+        status = recursiveGetStatusString(physicians, status);
+        status = recursiveGetStatusString(nurses, status);
+        status = recursiveGetStatusString(anesthetists, status);
+        System.out.println(status);
+    }
     public MedicalPersonnel[] getAvaliable(MedicalPersonnel[] medic, int num, String skillName, boolean emergency)
     {
         MedicalPersonnel avaliableMedic[] = new MedicalPersonnel[num];
@@ -88,12 +97,7 @@ public class Hospital
                 if(medicBeAvaliable < num)
                     return null;
                 else
-                {
-                    //使需要透支的人員透支
-                    for(int e=exhaustedaIndexStart; e < num; e++)
-                        avaliableMedic[e].setToExhaust();
                     return avaliableMedic;
-                }
             }
         }
         else
@@ -111,7 +115,7 @@ public class Hospital
                 if(physicianexe != null && nurseexe != null)
                 {
                     recursiveExecute(physicianexe, "看診");
-                    recursiveExecute(nurses, "一般照護");
+                    recursiveExecute(nurseexe, "一般照護");
                     success = true;
                 }
                 break;
@@ -123,7 +127,7 @@ public class Hospital
                 if(surgeonexe != null && nurseexe != null)
                 {
                     recursiveExecute(surgeonexe, "看診");
-                    recursiveExecute(nurses, "一般照護");
+                    recursiveExecute(nurseexe, "一般照護");
                     success = true;
                 }
                 break;
@@ -131,13 +135,13 @@ public class Hospital
             case "surgery":
             {
                 MedicalPersonnel surgeonexe[] = getAvaliable(surgeons, 1, "手術", false);
-                MedicalPersonnel nurseexe[] = getAvaliable(nurses, 3, "開刀照護", false);
+                MedicalPersonnel nurseexe[] = getAvaliable(nurses, 3, "手術照護", false);
                 MedicalPersonnel anesthetistexe[] = getAvaliable(anesthetists, 1, "麻醉", false);
-                if(surgeonexe != null && nurseexe != null)
+                if(surgeonexe != null && nurseexe != null && anesthetistexe != null)
                 {
                     recursiveExecute(surgeonexe, "手術");
-                    recursiveExecute(nurses, "開刀照護");
-                    recursiveExecute(anesthetists, "麻醉");
+                    recursiveExecute(nurseexe, "手術照護");
+                    recursiveExecute(anesthetistexe, "麻醉");
                     success = true;
                 }
                 break;
@@ -149,7 +153,7 @@ public class Hospital
                 if(physicianexe != null && nurseexe != null)
                 {
                     recursiveExecute(physicianexe, "內科治療");
-                    recursiveExecute(nurses, "一般照護");
+                    recursiveExecute(nurseexe, "一般照護");
                     success = true;
                 }
                 break;
@@ -157,13 +161,13 @@ public class Hospital
             case "emergency-surgery":
             {
                 MedicalPersonnel surgeonexe[] = getAvaliable(surgeons, 1, "手術", true);
-                MedicalPersonnel nurseexe[] = getAvaliable(nurses, 3, "開刀照護", true);
+                MedicalPersonnel nurseexe[] = getAvaliable(nurses, 3, "手術照護", true);
                 MedicalPersonnel anesthetistexe[] = getAvaliable(anesthetists, 1, "麻醉", true);
-                if(surgeonexe != null && nurseexe != null)
+                if(surgeonexe != null && nurseexe != null && anesthetistexe != null)
                 {
                     recursiveExecute(surgeonexe, "手術");
-                    recursiveExecute(nurses, "開刀照護");
-                    recursiveExecute(anesthetists, "麻醉");
+                    recursiveExecute(nurseexe, "手術照護");
+                    recursiveExecute(anesthetistexe, "麻醉");
                     success = true;
                 }
                 break;
@@ -175,7 +179,7 @@ public class Hospital
                 if(physicianexe != null && nurseexe != null)
                 {
                     recursiveExecute(physicianexe, "急救治療");
-                    recursiveExecute(nurses, "一般照護");
+                    recursiveExecute(nurseexe, "一般照護");
                     success = true;
                 }
                 break;
@@ -198,6 +202,25 @@ public class Hospital
     private void recursiveExecute(MedicalPersonnel[] medic, String skillName)
     {
         for(MedicalPersonnel exe:medic)
+        {
+            //使需要透支的人員透支
+            if(!exe.enoughStamina(skillName))
+                exe.setToExhaust();
             exe.executeSkill(skillName);
+        }
+    }
+    private String recursiveGetStatusString(MedicalPersonnel[] medics, String status)
+    {
+        String statusSentence = "%s%d    體力：%s    狀態：%s%n";
+        for(int i=0; i < medics.length; i++)
+        {
+            String stamina = null;
+            if(medics[i].isExhausted())
+                stamina = "透支";
+            else
+                stamina = Integer.toString(medics[i].getStamina());
+            status += String.format(statusSentence, medics[i].getJobName(), (i+1), stamina, medics[i].getStatusString());
+        }
+        return status;
     }
 }
