@@ -33,6 +33,22 @@ public class Hospital
     {
         return new int[]{surgeons.length, physicians.length, nurses.length, anesthetists.length};
     }
+    public MedicalPersonnel[] getMedicList(String jobName)
+    {
+        switch(jobName)
+        {
+            case "Surgeon":
+                return surgeons;
+            case "Physician":
+                return physicians;
+            case "Nurse":
+                return nurses;
+            case "Anesthetist":
+                return anesthetists;
+            default:
+                return null;
+        }
+    }
     public MedicalPersonnel[] getAvaliable(MedicalPersonnel[] medic, int num, String skillName, boolean emergency)
     {
         MedicalPersonnel avaliableMedic[] = new MedicalPersonnel[num];
