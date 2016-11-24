@@ -1,6 +1,11 @@
 import javafx.application.Application;
+import javafx.collections.ObservableList;
+import javafx.collections.FXCollections;
+import javafx.geometry.Pos;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.Tab;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -97,22 +102,39 @@ class MedicTab extends Tab
         setContent(medicPane);
         setClosable(false);
     }
+    public void tabUpdate()
+    {
+        medicPane.paneUpdate();
+    }
 }
 public class HospitalGUI extends Application
 {
+    private final double therapySpace = 20.0;
     private static Hospital hospitalObj;
     private Hospital hospital;
-    private MedicTab medictabs[] = new MedicTab[4];
 
     @Override
     public void start(Stage stage)
     {
         hospital = hospitalObj;
         String medicJobNames[] = {"Surgeon", "Physician", "Nurse", "Anesthetist"};
+        MedicTab medictabs[] = new MedicTab[4];
         for(int i=0; i < medictabs.length; i++)
             medictabs[i] = new MedicTab(hospital, medicJobNames[i]);
         TabPane hospitalPane = new TabPane(medictabs[0], medictabs[1], medictabs[2], medictabs[3]);
-        Scene scene = new Scene(hospitalPane);
+        ObservableList<String> therapy = FXCollections.observableArrayList("medical", "wrap", "surgery", "chemotherapy", "emergency-surgery", "first-aid");
+        ComboBox<String> therapyComboBox = new ComboBox<String>(therapy);
+        Button therapyConfirmButton = new Button("確定執行");
+        therapyConfirmButton.setOnMouseClicked(event -> {
+            hospital.dealWithIllness(therapyComboBox.getValue());
+            hospital.turnOver();
+            for(MedicTab medictab:medictabs)
+                medictab.tabUpdate();
+        });
+        HBox therapyBox = new HBox(20.0, therapyComboBox, therapyConfirmButton);
+        therapyBox.setAlignment(Pos.CENTER);
+        VBox hospitalPageBox = new VBox(hospitalPane, therapyBox);
+        Scene scene = new Scene(hospitalPageBox);
         stage.setScene(scene);
         stage.setTitle("果然我的醫院悠閒喜劇搞錯了。");
         stage.show();
