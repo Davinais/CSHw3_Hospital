@@ -1,9 +1,22 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.Arrays;
+
 public class Hospital
 {
     Surgeon surgeons[];
     Physician physicians[];
     Nurse nurses[];
     Anesthetist anesthetists[];
+    private static final String savePath = "Hospital.sav";
+    private static File saveFile = new File(savePath);
+    private static byte savePrefix[] = {68, 65, 72, 79}; //'D' 'A' 'H' 'O'
+    private static final int medicNeededSaveDataNum = 6, medicsLengthSpace = 4;
     //醫院建構函數，順序為外科醫生數量->內科醫生數量->護士數量->麻醉師數量
     public Hospital(int surgeon_num, int physician_num, int nurse_num, int anesthetist_num)
     {
@@ -47,6 +60,77 @@ public class Hospital
                 return anesthetists;
             default:
                 return null;
+        }
+    }
+    public void saveHospital() throws IOException
+    {
+        if(!saveFile.exists())
+            saveFile.createNewFile();
+        FileOutputStream saveFO = new FileOutputStream(saveFile);
+        ByteBuffer saveByteBuf = ByteBuffer.allocate(savePrefix.length+medicsLengthSpace+(surgeons.length+physicians.length+nurses.length+anesthetists.length)*medicNeededSaveDataNum);
+        saveByteBuf.clear();
+        saveByteBuf.put(savePrefix);
+        byte medicsLength[] = {(byte)surgeons.length, (byte)physicians.length, (byte)nurses.length, (byte)anesthetists.length};
+        saveByteBuf.put(medicsLength);
+        recursiveSaveToByteBuffer(surgeons, saveByteBuf);
+        recursiveSaveToByteBuffer(physicians, saveByteBuf);
+        recursiveSaveToByteBuffer(nurses, saveByteBuf);
+        recursiveSaveToByteBuffer(anesthetists, saveByteBuf);
+        saveByteBuf.flip();
+        FileChannel saveChannel = saveFO.getChannel();
+        while(saveByteBuf.hasRemaining())
+            saveChannel.write(saveByteBuf);
+        saveChannel.close();
+        saveFO.close();
+        System.out.println("存檔完成！");
+    }
+    private void recursiveSaveToByteBuffer(MedicalPersonnel[] medics, ByteBuffer saveByteBuf)
+    {
+        for(MedicalPersonnel medic:medics)
+        {
+            byte idle = (byte)((medic.isIdle())?1:0);
+            byte exhausted = (byte)((medic.isExhausted())?1:0);
+            byte haveExhausted = (byte)((medic.haveBeenExhausted())?1:0);
+            byte saveData[] = {(byte)(medic.getStamina()), (byte)(medic.getBusyTurn()), (byte)(medic.getExhaustedTurn()), idle, exhausted, haveExhausted};
+            saveByteBuf.put(saveData);
+        }
+    }
+    public static Hospital loadHospital() throws IOException, FileNotFoundException
+    {
+        if(!saveFile.exists())
+            throw new FileNotFoundException("找不到存檔，請確定同目錄下存在" + savePath + "檔案！");
+        FileInputStream saveFI = new FileInputStream(saveFile);
+        ByteBuffer loadByteBuf = ByteBuffer.allocate((int)(saveFile.length()));
+        loadByteBuf.clear();
+        FileChannel loadChannel = saveFI.getChannel();
+        while(loadChannel.read(loadByteBuf) > 0);
+        loadChannel.close();
+        saveFI.close();
+        loadByteBuf.flip();
+        byte savePrefixCheck[] = new byte[4];
+        loadByteBuf.get(savePrefixCheck);
+        if(!(Arrays.equals(savePrefix, savePrefixCheck)))
+            throw new FileNotFoundException("非正確存檔格式，請確定" + savePath + "為本程式產生的存檔！");
+        byte medicsLength[] = new byte[4];
+        loadByteBuf.get(medicsLength);
+        Hospital hospital = new Hospital(medicsLength[0], medicsLength[1], medicsLength[2], medicsLength[3]);
+        hospital.recursiveLoadToByteBuffer(hospital.surgeons, loadByteBuf);
+        hospital.recursiveLoadToByteBuffer(hospital.physicians, loadByteBuf);
+        hospital.recursiveLoadToByteBuffer(hospital.nurses, loadByteBuf);
+        hospital.recursiveLoadToByteBuffer(hospital.anesthetists, loadByteBuf);
+        System.out.println("讀檔完成！");
+        return hospital;
+    }
+    private void recursiveLoadToByteBuffer(MedicalPersonnel[] medics, ByteBuffer loadByteBuf)
+    {
+        for(MedicalPersonnel medic:medics)
+        {
+            byte saveData[] = new byte[medicNeededSaveDataNum];
+            loadByteBuf.get(saveData);
+            boolean idle = (saveData[3] == (byte)1);
+            boolean exhausted = (saveData[4] == (byte)1);
+            boolean haveExhausted = (saveData[5] == (byte)1);
+            medic.readToStatus(saveData[0], saveData[1], saveData[2], idle, exhausted, haveExhausted);
         }
     }
     public MedicalPersonnel[] getAvaliable(MedicalPersonnel[] medic, int num, String skillName, boolean emergency)

@@ -111,6 +111,14 @@ public abstract class MedicalPersonnel
                 idle = true;
         }
     }
+    public int getBusyTurn()
+    {
+        return busyTurn;
+    }
+    public int getExhaustedTurn()
+    {
+        return exhaustedTurn;
+    }
     public int getMaxStamina()
     {
         return STAMINA_MAX;
