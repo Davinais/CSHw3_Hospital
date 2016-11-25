@@ -8,6 +8,10 @@ public class Skill
         this.skillStaminaCost = skillStaminaCost;
         this.skillNeededTurn = skillNeededTurn;
     }
+    public String getSkillName()
+    {
+        return skillName;
+    }
     public int getStaminaCost()
     {
         return skillStaminaCost;

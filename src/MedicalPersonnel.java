@@ -25,6 +25,10 @@ public abstract class MedicalPersonnel
     {
         skills.put(skillName, new Skill(skillName, skillStaminaCost, skillNeededTurn));
     }
+    protected void addSkill(Skill skill)
+    {
+        skills.put(skill.getSkillName(), skill);
+    }
     protected void readToStatus(int stamina, int busyTurn, int exhaustedTurn, boolean idle, boolean exhausted, boolean haveExhausted)
     {
         this.stamina = stamina;
