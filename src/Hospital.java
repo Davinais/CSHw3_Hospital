@@ -100,19 +100,24 @@ public class Hospital
         if(!saveFile.exists())
             throw new FileNotFoundException("找不到存檔，請確定同目錄下存在" + savePath + "檔案！");
         FileInputStream saveFI = new FileInputStream(saveFile);
-        ByteBuffer loadByteBuf = ByteBuffer.allocate((int)(saveFile.length()));
+        int saveFileLength = (int)(saveFile.length());
+        if(saveFileLength < savePrefix.length + medicsLengthSpace)
+            throw new FileNotFoundException("非正確存檔格式，請確定" + savePath + "為本程式產生的存檔！");
+        ByteBuffer loadByteBuf = ByteBuffer.allocate(saveFileLength);
         loadByteBuf.clear();
         FileChannel loadChannel = saveFI.getChannel();
         while(loadChannel.read(loadByteBuf) > 0);
         loadChannel.close();
         saveFI.close();
         loadByteBuf.flip();
-        byte savePrefixCheck[] = new byte[4];
+        byte savePrefixCheck[] = new byte[savePrefix.length];
         loadByteBuf.get(savePrefixCheck);
         if(!(Arrays.equals(savePrefix, savePrefixCheck)))
             throw new FileNotFoundException("非正確存檔格式，請確定" + savePath + "為本程式產生的存檔！");
         byte medicsLength[] = new byte[4];
         loadByteBuf.get(medicsLength);
+        if(saveFileLength != (savePrefix.length+medicsLengthSpace+(medicsLength[0]+medicsLength[1]+medicsLength[2]+medicsLength[3])*medicNeededSaveDataNum))
+            throw new FileNotFoundException("非正確存檔格式，請確定" + savePath + "為本程式產生的存檔！");
         Hospital hospital = new Hospital(medicsLength[0], medicsLength[1], medicsLength[2], medicsLength[3]);
         hospital.recursiveLoadToByteBuffer(hospital.surgeons, loadByteBuf);
         hospital.recursiveLoadToByteBuffer(hospital.physicians, loadByteBuf);

@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.Tab;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.image.Image;
@@ -14,6 +15,8 @@ import javafx.scene.layout.TilePane;
 import javafx.scene.text.Text;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import java.io.IOException;
+import java.io.FileNotFoundException;
 
 class MedicStatusBox extends HBox
 {
@@ -109,7 +112,7 @@ class MedicTab extends Tab
 }
 public class HospitalGUI extends Application
 {
-    private final double therapySpace = 20.0;
+    private final double therapySpace = 20.0, buttonSpace = 5.0;
     private static Hospital hospitalObj;
     private Hospital hospital;
 
@@ -133,11 +136,69 @@ public class HospitalGUI extends Application
         });
         HBox therapyBox = new HBox(20.0, therapyComboBox, therapyConfirmButton);
         therapyBox.setAlignment(Pos.CENTER);
-        VBox hospitalPageBox = new VBox(hospitalPane, therapyBox);
+        Button saveButton = new Button("儲存狀態");
+        Button loadButton = new Button("讀取狀態");
+        setSLButton(saveButton, loadButton, stage);
+        HBox functionalButtonBox = new HBox(buttonSpace, saveButton, loadButton);
+        VBox hospitalPageBox = new VBox(hospitalPane, therapyBox, functionalButtonBox);
         Scene scene = new Scene(hospitalPageBox);
         stage.setScene(scene);
         stage.setTitle("果然我的醫院悠閒喜劇搞錯了。");
         stage.show();
+    }
+    private void setSLButton(Button saveButton, Button loadButton, Stage stage)
+    {
+        Alert slCompleteAlert = new Alert(Alert.AlertType.INFORMATION);
+        slCompleteAlert.setHeaderText(null);
+        Alert slErrorAlert = new Alert(Alert.AlertType.ERROR);
+        slErrorAlert.setHeaderText(null);
+        saveButton.setOnMouseClicked(event -> {
+            loadButton.setDisable(true);
+            try
+            {
+                hospital.saveHospital();
+                slCompleteAlert.setTitle("儲存狀態");
+                slCompleteAlert.setContentText("已儲存至Hospital.sav！");
+                slCompleteAlert.showAndWait();
+            }
+            catch(IOException e)
+            {
+                slErrorAlert.setTitle("儲存狀態");
+                slErrorAlert.setContentText("發生IO例外，儲存失敗！");
+                slErrorAlert.showAndWait();
+            }
+            finally
+            {
+                loadButton.setDisable(false);
+            }
+        });
+        loadButton.setOnMouseClicked(event -> {
+            saveButton.setDisable(true);
+            try
+            {
+                hospitalObj = Hospital.loadHospital();
+                slCompleteAlert.setTitle("讀取遊戲");
+                slCompleteAlert.setContentText("讀取完成！");
+                slCompleteAlert.showAndWait();
+                start(stage);
+            }
+            catch(FileNotFoundException e)
+            {
+                slErrorAlert.setTitle("讀取狀態");
+                slErrorAlert.setContentText(e.getMessage());
+                slErrorAlert.showAndWait();
+            }
+            catch(IOException e)
+            {
+                slErrorAlert.setTitle("讀取狀態");
+                slErrorAlert.setContentText("發生IO例外，讀取失敗！");
+                slErrorAlert.showAndWait();
+            }
+            finally
+            {
+                saveButton.setDisable(false);
+            }
+        });
     }
     public static void setHospital(Hospital hospital)
     {
