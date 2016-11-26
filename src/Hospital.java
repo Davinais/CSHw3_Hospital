@@ -110,18 +110,18 @@ public class Hospital
     {
         if(!saveFile.exists())
             saveFile.createNewFile();
+        ByteBuffer saveByteBuf = ByteBuffer.allocate(savePrefix.length+medicsLengthSpace+(surgeons.length+physicians.length+nurses.length+anesthetists.length)*medicNeededSaveDataNum);
+        saveByteBuf.clear();
+        saveByteBuf.put(savePrefix);
+        byte medicsLength[] = {(byte)surgeons.length, (byte)physicians.length, (byte)nurses.length, (byte)anesthetists.length};
+        saveByteBuf.put(medicsLength);
+        saveToByteBuffer(surgeons, saveByteBuf);
+        saveToByteBuffer(physicians, saveByteBuf);
+        saveToByteBuffer(nurses, saveByteBuf);
+        saveToByteBuffer(anesthetists, saveByteBuf);
+        saveByteBuf.flip();
         try(FileOutputStream saveFO = new FileOutputStream(saveFile))
         {
-            ByteBuffer saveByteBuf = ByteBuffer.allocate(savePrefix.length+medicsLengthSpace+(surgeons.length+physicians.length+nurses.length+anesthetists.length)*medicNeededSaveDataNum);
-            saveByteBuf.clear();
-            saveByteBuf.put(savePrefix);
-            byte medicsLength[] = {(byte)surgeons.length, (byte)physicians.length, (byte)nurses.length, (byte)anesthetists.length};
-            saveByteBuf.put(medicsLength);
-            saveToByteBuffer(surgeons, saveByteBuf);
-            saveToByteBuffer(physicians, saveByteBuf);
-            saveToByteBuffer(nurses, saveByteBuf);
-            saveToByteBuffer(anesthetists, saveByteBuf);
-            saveByteBuf.flip();
             try(FileChannel saveChannel = saveFO.getChannel())
             {
                 while(saveByteBuf.hasRemaining())
