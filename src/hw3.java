@@ -1,14 +1,37 @@
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
+import java.util.Arrays;
+import java.util.List;
 
 public class hw3
 {
+    public static void printHelp(String cmdPrefix, String[] avaliableTherapy)
+    {
+        String avaliable = "";
+        for(String s:avaliableTherapy)
+            avaliable += "[" + s + "]";
+        System.out.println("可進行療程:" + avaliable);
+        System.out.println("    game over :結束本程式");
+        System.out.println("    " + cmdPrefix + "save :儲存目前狀態");
+        System.out.println("    " + cmdPrefix + "load :從先前存檔讀取狀態");
+        System.out.println("    " + cmdPrefix + "gui :顯示GUI介面，關閉GUI後同時退出程式");
+        System.out.println("    " + cmdPrefix + "help :顯示本說明");
+    }
     public static void main(String[] args)
     {
         Scanner input = new Scanner(System.in);
         Hospital nckuHospital = new Hospital(3, 3, 10, 2);
-        String cmdPrefix = "cmd ";
+        String cmdPrefix = ">";
+        String avaliableTherapy[] = nckuHospital.getAvaliableTherapy();
+        List<String> checkTherapy = Arrays.asList(avaliableTherapy);
+        String notFoundTherapyMessage = "不好意思，無法進行您輸入的治療方法，可能是輸入錯誤囉！\n我們目前能夠進行以下方法：\n";
+        {
+            for(String s:avaliableTherapy)
+                notFoundTherapyMessage += "[" + s + "] ";
+            notFoundTherapyMessage += "\n若是想進行指令，請輸入【" + cmdPrefix + "help】確認想輸入的指令";
+        }
+        printHelp(cmdPrefix, avaliableTherapy);
         while(true)
         {
             nckuHospital.printStatus();
@@ -17,7 +40,9 @@ public class hw3
             if(therapy.startsWith(cmdPrefix))
             {
                 therapy = therapy.substring(cmdPrefix.length());
-                if(therapy.equals("save"))
+                if(therapy.equals("help"))
+                    printHelp(cmdPrefix, avaliableTherapy);
+                else if(therapy.equals("save"))
                 {
                     try
                     {
@@ -55,9 +80,16 @@ public class hw3
                 break;
             else 
             {
-                if(!nckuHospital.dealWithIllness(therapy))
-                    System.out.println("不好意思，本醫院目前人手不足，可能要麻煩您轉院囉！");
-                nckuHospital.turnOver();
+                if(checkTherapy.contains(therapy))
+                {
+                    if(!nckuHospital.dealWithIllness(therapy))
+                        System.out.println("不好意思，本醫院目前人手不足，可能要麻煩您轉院囉！");
+                    nckuHospital.turnOver();
+                }
+                else
+                {
+                    System.out.println(notFoundTherapyMessage);
+                }
             }
         }
         System.out.println("本院祝您不用暴肝，身體健康～");

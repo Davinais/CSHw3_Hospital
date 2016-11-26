@@ -14,6 +14,7 @@ public class Hospital
     Physician physicians[];
     Nurse nurses[];
     Anesthetist anesthetists[];
+    private String avaliableTherapy[];
     private static final String savePath = "Hospital.sav";
     private static File saveFile = new File(savePath);
     private static byte savePrefix[] = {68, 65, 72, 79}; //'D' 'A' 'H' 'O'
@@ -33,6 +34,7 @@ public class Hospital
         anesthetists = new Anesthetist[anesthetist_num];
         for(int i=0; i < anesthetist_num; i++)
             anesthetists[i] = new Anesthetist();
+        avaliableTherapy = new String[] {"medical", "wrap", "surgery", "chemotherapy", "emergency-surgery", "first-aid"};
     }
     public void printStatus()
     {
@@ -188,7 +190,11 @@ public class Hospital
             medic.readToStatus(saveData[0], saveData[1], saveData[2], idle, exhausted, haveExhausted);
         }
     }
-    public MedicalPersonnel[] getAvaliable(MedicalPersonnel[] medic, int num, String skillName, boolean emergency)
+    public String[] getAvaliableTherapy()
+    {
+        return Arrays.copyOf(avaliableTherapy, avaliableTherapy.length);
+    }
+    private MedicalPersonnel[] getAvaliableMedics(MedicalPersonnel[] medic, int num, String skillName, boolean emergency)
     {
         MedicalPersonnel avaliableMedic[] = new MedicalPersonnel[num];
         int medicBeAvaliable = 0;
@@ -269,8 +275,8 @@ public class Hospital
         {
             case "medical":
             {
-                MedicalPersonnel physicianexe[] = getAvaliable(physicians, 1, "看診", false);
-                MedicalPersonnel nurseexe[] = getAvaliable(nurses, 1, "一般照護", false);
+                MedicalPersonnel physicianexe[] = getAvaliableMedics(physicians, 1, "看診", false);
+                MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 1, "一般照護", false);
                 if(physicianexe != null && nurseexe != null)
                 {
                     executeByMedics(physicianexe, "看診");
@@ -281,8 +287,8 @@ public class Hospital
             }
             case "wrap":
             {
-                MedicalPersonnel surgeonexe[] = getAvaliable(surgeons, 1, "看診", false);
-                MedicalPersonnel nurseexe[] = getAvaliable(nurses, 1, "一般照護", false);
+                MedicalPersonnel surgeonexe[] = getAvaliableMedics(surgeons, 1, "看診", false);
+                MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 1, "一般照護", false);
                 if(surgeonexe != null && nurseexe != null)
                 {
                     executeByMedics(surgeonexe, "看診");
@@ -293,9 +299,9 @@ public class Hospital
             }
             case "surgery":
             {
-                MedicalPersonnel surgeonexe[] = getAvaliable(surgeons, 1, "手術", false);
-                MedicalPersonnel nurseexe[] = getAvaliable(nurses, 3, "手術照護", false);
-                MedicalPersonnel anesthetistexe[] = getAvaliable(anesthetists, 1, "麻醉", false);
+                MedicalPersonnel surgeonexe[] = getAvaliableMedics(surgeons, 1, "手術", false);
+                MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 3, "手術照護", false);
+                MedicalPersonnel anesthetistexe[] = getAvaliableMedics(anesthetists, 1, "麻醉", false);
                 if(surgeonexe != null && nurseexe != null && anesthetistexe != null)
                 {
                     executeByMedics(surgeonexe, "手術");
@@ -307,8 +313,8 @@ public class Hospital
             }
             case "chemotherapy":
             {
-                MedicalPersonnel physicianexe[] = getAvaliable(physicians, 1, "內科治療", false);
-                MedicalPersonnel nurseexe[] = getAvaliable(nurses, 1, "一般照護", false);
+                MedicalPersonnel physicianexe[] = getAvaliableMedics(physicians, 1, "內科治療", false);
+                MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 1, "一般照護", false);
                 if(physicianexe != null && nurseexe != null)
                 {
                     executeByMedics(physicianexe, "內科治療");
@@ -319,9 +325,9 @@ public class Hospital
             }
             case "emergency-surgery":
             {
-                MedicalPersonnel surgeonexe[] = getAvaliable(surgeons, 1, "手術", true);
-                MedicalPersonnel nurseexe[] = getAvaliable(nurses, 3, "手術照護", true);
-                MedicalPersonnel anesthetistexe[] = getAvaliable(anesthetists, 1, "麻醉", true);
+                MedicalPersonnel surgeonexe[] = getAvaliableMedics(surgeons, 1, "手術", true);
+                MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 3, "手術照護", true);
+                MedicalPersonnel anesthetistexe[] = getAvaliableMedics(anesthetists, 1, "麻醉", true);
                 if(surgeonexe != null && nurseexe != null && anesthetistexe != null)
                 {
                     executeByMedics(surgeonexe, "手術");
@@ -333,8 +339,8 @@ public class Hospital
             }
             case "first-aid":
             {
-                MedicalPersonnel physicianexe[] = getAvaliable(physicians, 1, "急救治療", true);
-                MedicalPersonnel nurseexe[] = getAvaliable(nurses, 2, "一般照護", true);
+                MedicalPersonnel physicianexe[] = getAvaliableMedics(physicians, 1, "急救治療", true);
+                MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 2, "一般照護", true);
                 if(physicianexe != null && nurseexe != null)
                 {
                     executeByMedics(physicianexe, "急救治療");
