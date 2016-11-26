@@ -45,14 +45,14 @@ public class Hospital
         for(int i=0; i < lineNeeded; i+=5)
             statusBuf[i].append(separateLine);
         int nowPos[] = {0, 0};
-        recursiveGetStatusString(surgeons, statusBuf, nowPos);
-        recursiveGetStatusString(physicians, statusBuf, nowPos);
-        recursiveGetStatusString(nurses, statusBuf, nowPos);
-        recursiveGetStatusString(anesthetists, statusBuf, nowPos);
+        formatStatusStringByMedics(surgeons, statusBuf, nowPos);
+        formatStatusStringByMedics(physicians, statusBuf, nowPos);
+        formatStatusStringByMedics(nurses, statusBuf, nowPos);
+        formatStatusStringByMedics(anesthetists, statusBuf, nowPos);
         for(int line=0; line < statusBuf.length; line++)
             System.out.println(statusBuf[line].toString());
     }
-    public void recursiveGetStatusString(MedicalPersonnel[] medics, StringBuilder[] statusBuf, int[] nowPos)
+    private void formatStatusStringByMedics(MedicalPersonnel[] medics, StringBuilder[] statusBuf, int[] nowPos)
     {
         int space = 13;
         for(int i=0; i < medics.length; i++)
@@ -117,10 +117,10 @@ public class Hospital
             saveByteBuf.put(savePrefix);
             byte medicsLength[] = {(byte)surgeons.length, (byte)physicians.length, (byte)nurses.length, (byte)anesthetists.length};
             saveByteBuf.put(medicsLength);
-            recursiveSaveToByteBuffer(surgeons, saveByteBuf);
-            recursiveSaveToByteBuffer(physicians, saveByteBuf);
-            recursiveSaveToByteBuffer(nurses, saveByteBuf);
-            recursiveSaveToByteBuffer(anesthetists, saveByteBuf);
+            saveToByteBuffer(surgeons, saveByteBuf);
+            saveToByteBuffer(physicians, saveByteBuf);
+            saveToByteBuffer(nurses, saveByteBuf);
+            saveToByteBuffer(anesthetists, saveByteBuf);
             saveByteBuf.flip();
             try(FileChannel saveChannel = saveFO.getChannel())
             {
@@ -130,7 +130,7 @@ public class Hospital
         }
         System.out.println("存檔完成！");
     }
-    private void recursiveSaveToByteBuffer(MedicalPersonnel[] medics, ByteBuffer saveByteBuf)
+    private void saveToByteBuffer(MedicalPersonnel[] medics, ByteBuffer saveByteBuf)
     {
         for(MedicalPersonnel medic:medics)
         {
@@ -169,14 +169,14 @@ public class Hospital
         if(saveFileLength != (savePrefix.length+medicsLengthSpace+(medicsLength[0]+medicsLength[1]+medicsLength[2]+medicsLength[3])*medicNeededSaveDataNum))
             throw new FileNotFoundException("非正確存檔格式，請確定" + savePath + "為本程式產生的存檔！");
         Hospital hospital = new Hospital(medicsLength[0], medicsLength[1], medicsLength[2], medicsLength[3]);
-        hospital.recursiveLoadToByteBuffer(hospital.surgeons, loadByteBuf);
-        hospital.recursiveLoadToByteBuffer(hospital.physicians, loadByteBuf);
-        hospital.recursiveLoadToByteBuffer(hospital.nurses, loadByteBuf);
-        hospital.recursiveLoadToByteBuffer(hospital.anesthetists, loadByteBuf);
+        hospital.loadFromByteBuffer(hospital.surgeons, loadByteBuf);
+        hospital.loadFromByteBuffer(hospital.physicians, loadByteBuf);
+        hospital.loadFromByteBuffer(hospital.nurses, loadByteBuf);
+        hospital.loadFromByteBuffer(hospital.anesthetists, loadByteBuf);
         System.out.println("讀檔完成！");
         return hospital;
     }
-    private void recursiveLoadToByteBuffer(MedicalPersonnel[] medics, ByteBuffer loadByteBuf)
+    private void loadFromByteBuffer(MedicalPersonnel[] medics, ByteBuffer loadByteBuf)
     {
         for(MedicalPersonnel medic:medics)
         {
@@ -273,8 +273,8 @@ public class Hospital
                 MedicalPersonnel nurseexe[] = getAvaliable(nurses, 1, "一般照護", false);
                 if(physicianexe != null && nurseexe != null)
                 {
-                    recursiveExecute(physicianexe, "看診");
-                    recursiveExecute(nurseexe, "一般照護");
+                    executeByMedics(physicianexe, "看診");
+                    executeByMedics(nurseexe, "一般照護");
                     success = true;
                 }
                 break;
@@ -285,8 +285,8 @@ public class Hospital
                 MedicalPersonnel nurseexe[] = getAvaliable(nurses, 1, "一般照護", false);
                 if(surgeonexe != null && nurseexe != null)
                 {
-                    recursiveExecute(surgeonexe, "看診");
-                    recursiveExecute(nurseexe, "一般照護");
+                    executeByMedics(surgeonexe, "看診");
+                    executeByMedics(nurseexe, "一般照護");
                     success = true;
                 }
                 break;
@@ -298,9 +298,9 @@ public class Hospital
                 MedicalPersonnel anesthetistexe[] = getAvaliable(anesthetists, 1, "麻醉", false);
                 if(surgeonexe != null && nurseexe != null && anesthetistexe != null)
                 {
-                    recursiveExecute(surgeonexe, "手術");
-                    recursiveExecute(nurseexe, "手術照護");
-                    recursiveExecute(anesthetistexe, "麻醉");
+                    executeByMedics(surgeonexe, "手術");
+                    executeByMedics(nurseexe, "手術照護");
+                    executeByMedics(anesthetistexe, "麻醉");
                     success = true;
                 }
                 break;
@@ -311,8 +311,8 @@ public class Hospital
                 MedicalPersonnel nurseexe[] = getAvaliable(nurses, 1, "一般照護", false);
                 if(physicianexe != null && nurseexe != null)
                 {
-                    recursiveExecute(physicianexe, "內科治療");
-                    recursiveExecute(nurseexe, "一般照護");
+                    executeByMedics(physicianexe, "內科治療");
+                    executeByMedics(nurseexe, "一般照護");
                     success = true;
                 }
                 break;
@@ -324,9 +324,9 @@ public class Hospital
                 MedicalPersonnel anesthetistexe[] = getAvaliable(anesthetists, 1, "麻醉", true);
                 if(surgeonexe != null && nurseexe != null && anesthetistexe != null)
                 {
-                    recursiveExecute(surgeonexe, "手術");
-                    recursiveExecute(nurseexe, "手術照護");
-                    recursiveExecute(anesthetistexe, "麻醉");
+                    executeByMedics(surgeonexe, "手術");
+                    executeByMedics(nurseexe, "手術照護");
+                    executeByMedics(anesthetistexe, "麻醉");
                     success = true;
                 }
                 break;
@@ -337,8 +337,8 @@ public class Hospital
                 MedicalPersonnel nurseexe[] = getAvaliable(nurses, 2, "一般照護", true);
                 if(physicianexe != null && nurseexe != null)
                 {
-                    recursiveExecute(physicianexe, "急救治療");
-                    recursiveExecute(nurseexe, "一般照護");
+                    executeByMedics(physicianexe, "急救治療");
+                    executeByMedics(nurseexe, "一般照護");
                     success = true;
                 }
                 break;
@@ -358,7 +358,7 @@ public class Hospital
         for(Anesthetist anesthetist:anesthetists)
             anesthetist.turnOver();
     }
-    private void recursiveExecute(MedicalPersonnel[] medic, String skillName)
+    private void executeByMedics(MedicalPersonnel[] medic, String skillName)
     {
         for(MedicalPersonnel exe:medic)
         {
