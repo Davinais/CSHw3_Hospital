@@ -23,7 +23,7 @@ class MedicStatusBox extends HBox
     private int index;
     private MedicalPersonnel medic;
     private Image medicImage;
-    private Text jobNameText, staminaText, statusText;
+    private Text jobNameText, staminaText, statusText, waitTurnText;
     public MedicStatusBox(MedicalPersonnel medic, int index)
     {
         super();
@@ -34,27 +34,32 @@ class MedicStatusBox extends HBox
         jobNameText = new Text(medic.getJobName() + index);
         staminaText = new Text();
         statusText = new Text();
+        waitTurnText = new Text();
         statusUpdate();
-        VBox textBox = new VBox(jobNameText, staminaText, statusText);
+        VBox textBox = new VBox(jobNameText, staminaText, statusText, waitTurnText);
         getChildren().addAll(medicImageView, textBox);
     }
     public void statusUpdate()
     {
-        String staminaContent = "體力：%s";
-        String statusContent = "狀態：%s";
         String stamina = null;
         if(medic.isExhausted())
             stamina = "透支";
         else
-            stamina = Integer.toString(medic.getStamina());
-        staminaText.textProperty().setValue(String.format(staminaContent, stamina));
-        statusText.textProperty().setValue(String.format(statusContent, medic.getStatusString()));
+            stamina = Integer.toString(medic.getStamina()) + "/" + Integer.toString(medic.getMaxStamina());
+        staminaText.textProperty().setValue("體力：" + stamina);
+        statusText.textProperty().setValue("狀態：" + medic.getStatusString());
+        int waitTurn = medic.getWaitTurn();
+        if(waitTurn == 0)
+            waitTurnText.textProperty().setValue(null);
+        else
+            waitTurnText.textProperty().setValue("[尚需" + waitTurn + "回合]");
     }
 }
 class MedicPane extends TilePane
 {
     private MedicalPersonnel[] medics;
     private MedicStatusBox[] medicStats;
+    private double prefStatusWidth = 140.0;
     public MedicPane(MedicalPersonnel[] medics)
     {
         super();
@@ -65,6 +70,8 @@ class MedicPane extends TilePane
             medicStats[i] = new MedicStatusBox(medics[i], (i+1));
             getChildren().add(medicStats[i]);
         }
+        setPrefTileWidth(prefStatusWidth);
+        setPrefColumns(5);
     }
     public void paneUpdate()
     {

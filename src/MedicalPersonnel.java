@@ -76,11 +76,11 @@ public abstract class MedicalPersonnel
     public String getStatusString()
     {
         if(exhausted)
-            return String.format("透支[%d回合]", (busyTurn + exhaustedTurn));
+            return "透支";
         else if(idle)
             return "閒置";
         else
-            return String.format("忙碌[%d回合]", busyTurn);
+            return "忙碌";
     }
     public String getJobName()
     {
@@ -122,6 +122,15 @@ public abstract class MedicalPersonnel
     public int getExhaustedTurn()
     {
         return exhaustedTurn;
+    }
+    public int getWaitTurn()
+    {
+        if(exhausted)
+            return busyTurn+exhaustedTurn;
+        else if(idle)
+            return 0;
+        else
+            return busyTurn;
     }
     public int getMaxStamina()
     {

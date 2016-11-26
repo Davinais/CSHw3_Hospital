@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import java.nio.charset.Charset;
 
 public class Hospital
 {
@@ -35,12 +36,55 @@ public class Hospital
     }
     public void printStatus()
     {
-        String status = "";
-        status = recursiveGetStatusString(surgeons, status);
-        status = recursiveGetStatusString(physicians, status);
-        status = recursiveGetStatusString(nurses, status);
-        status = recursiveGetStatusString(anesthetists, status);
-        System.out.println(status);
+        final int statusPerRow = 6;
+        int lineNeeded = (int)(Math.ceil((surgeons.length+physicians.length+nurses.length+anesthetists.length)/(statusPerRow*1.0)))*5+1;
+        String separateLine = new String(new char[80]).replace("\0", "-");
+        StringBuilder statusBuf[] = new StringBuilder[lineNeeded];
+        for(int i=0; i < lineNeeded; i++)
+            statusBuf[i] = new StringBuilder();
+        for(int i=0; i < lineNeeded; i+=5)
+            statusBuf[i].append(separateLine);
+        int nowPos[] = {0, 0};
+        recursiveGetStatusString(surgeons, statusBuf, nowPos);
+        recursiveGetStatusString(physicians, statusBuf, nowPos);
+        recursiveGetStatusString(nurses, statusBuf, nowPos);
+        recursiveGetStatusString(anesthetists, statusBuf, nowPos);
+        for(int line=0; line < statusBuf.length; line++)
+            System.out.println(statusBuf[line].toString());
+    }
+    public void recursiveGetStatusString(MedicalPersonnel[] medics, StringBuilder[] statusBuf, int[] nowPos)
+    {
+        int space = 13;
+        for(int i=0; i < medics.length; i++)
+        {
+            int lineSkip = nowPos[0]*5;
+            statusBuf[lineSkip+1].append(stringPadding(medics[i].getJobName() + (i+1), space));
+            if(medics[i].isExhausted())
+                statusBuf[lineSkip+2].append(stringPadding("體力:透支", space));
+            else
+                statusBuf[lineSkip+2].append(stringPadding("體力:" + medics[i].getStamina() + "/" + medics[i].getMaxStamina(), space));
+            statusBuf[lineSkip+3].append(stringPadding("狀態:" + medics[i].getStatusString(), space));
+            int waitTurn = medics[i].getWaitTurn();
+            if(waitTurn > 0)
+                statusBuf[lineSkip+4].append(stringPadding("[尚需" + waitTurn + "回合]", space));
+            else
+                statusBuf[lineSkip+4].append(stringPadding("", space));
+            nowPos[1]++;
+            if(nowPos[1] >= 6)
+            {
+                nowPos[0]++;
+                nowPos[1] = 0;
+            }
+        }
+    }
+    public String stringPadding(String s, int space)
+    {
+        int spaceNeeded = space - s.getBytes(Charset.forName("Big5")).length;
+        if(spaceNeeded <= 0)
+            return s;
+        for(int i=0; i < spaceNeeded; i++)
+            s += " ";
+        return s;
     }
     public int[] getMedicNumber()
     {
@@ -317,19 +361,5 @@ public class Hospital
                 exe.setToExhaust();
             exe.executeSkill(skillName);
         }
-    }
-    private String recursiveGetStatusString(MedicalPersonnel[] medics, String status)
-    {
-        String statusSentence = "%s%d    體力：%s    狀態：%s%n";
-        for(int i=0; i < medics.length; i++)
-        {
-            String stamina = null;
-            if(medics[i].isExhausted())
-                stamina = "透支";
-            else
-                stamina = Integer.toString(medics[i].getStamina());
-            status += String.format(statusSentence, medics[i].getJobName(), (i+1), stamina, medics[i].getStatusString());
-        }
-        return status;
     }
 }
