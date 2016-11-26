@@ -8,35 +8,47 @@ public class hw3
     {
         Scanner input = new Scanner(System.in);
         Hospital nckuHospital = new Hospital(3, 3, 10, 2);
+        String cmdPrefix = "cmd ";
         while(true)
         {
             nckuHospital.printStatus();
             System.out.print("請輸入新病患需要的治療方法\n>>> ");
             String therapy = input.nextLine();
-            if(therapy.equals("save"))
+            if(therapy.startsWith(cmdPrefix))
             {
-                try
+                therapy = therapy.substring(cmdPrefix.length());
+                if(therapy.equals("save"))
                 {
-                    nckuHospital.saveHospital();
+                    try
+                    {
+                        nckuHospital.saveHospital();
+                    }
+                    catch(IOException e)
+                    {
+                        e.printStackTrace();
+                    }
                 }
-                catch(IOException e)
+                else if(therapy.equals("load"))
                 {
-                    e.printStackTrace();
+                    try
+                    {
+                        nckuHospital = Hospital.loadHospital();
+                    }
+                    catch(FileNotFoundException e)
+                    {
+                        System.out.println(e.getMessage());
+                    }
+                    catch(IOException e)
+                    {
+                        e.printStackTrace();
+                    }
                 }
-            }
-            else if(therapy.equals("load"))
-            {
-                try
+                else if(therapy.equals("gui"))
                 {
-                    nckuHospital = Hospital.loadHospital();
-                }
-                catch(FileNotFoundException e)
-                {
-                    System.out.println(e.getMessage());
-                }
-                catch(IOException e)
-                {
-                    e.printStackTrace();
+                    HospitalGUI.setHospital(nckuHospital);
+                    HospitalGUI.launch(HospitalGUI.class);
+                    System.out.println("結束GUI介面，治療完成～");
+                    break;
                 }
             }
             else if(therapy.equals("game over"))
