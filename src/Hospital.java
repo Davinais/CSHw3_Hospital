@@ -110,22 +110,24 @@ public class Hospital
     {
         if(!saveFile.exists())
             saveFile.createNewFile();
-        FileOutputStream saveFO = new FileOutputStream(saveFile);
-        ByteBuffer saveByteBuf = ByteBuffer.allocate(savePrefix.length+medicsLengthSpace+(surgeons.length+physicians.length+nurses.length+anesthetists.length)*medicNeededSaveDataNum);
-        saveByteBuf.clear();
-        saveByteBuf.put(savePrefix);
-        byte medicsLength[] = {(byte)surgeons.length, (byte)physicians.length, (byte)nurses.length, (byte)anesthetists.length};
-        saveByteBuf.put(medicsLength);
-        recursiveSaveToByteBuffer(surgeons, saveByteBuf);
-        recursiveSaveToByteBuffer(physicians, saveByteBuf);
-        recursiveSaveToByteBuffer(nurses, saveByteBuf);
-        recursiveSaveToByteBuffer(anesthetists, saveByteBuf);
-        saveByteBuf.flip();
-        FileChannel saveChannel = saveFO.getChannel();
-        while(saveByteBuf.hasRemaining())
-            saveChannel.write(saveByteBuf);
-        saveChannel.close();
-        saveFO.close();
+        try(FileOutputStream saveFO = new FileOutputStream(saveFile))
+        {
+            ByteBuffer saveByteBuf = ByteBuffer.allocate(savePrefix.length+medicsLengthSpace+(surgeons.length+physicians.length+nurses.length+anesthetists.length)*medicNeededSaveDataNum);
+            saveByteBuf.clear();
+            saveByteBuf.put(savePrefix);
+            byte medicsLength[] = {(byte)surgeons.length, (byte)physicians.length, (byte)nurses.length, (byte)anesthetists.length};
+            saveByteBuf.put(medicsLength);
+            recursiveSaveToByteBuffer(surgeons, saveByteBuf);
+            recursiveSaveToByteBuffer(physicians, saveByteBuf);
+            recursiveSaveToByteBuffer(nurses, saveByteBuf);
+            recursiveSaveToByteBuffer(anesthetists, saveByteBuf);
+            saveByteBuf.flip();
+            try(FileChannel saveChannel = saveFO.getChannel())
+            {
+                while(saveByteBuf.hasRemaining())
+                    saveChannel.write(saveByteBuf);
+            }
+        }
         System.out.println("存檔完成！");
     }
     private void recursiveSaveToByteBuffer(MedicalPersonnel[] medics, ByteBuffer saveByteBuf)
@@ -143,16 +145,20 @@ public class Hospital
     {
         if(!saveFile.exists())
             throw new FileNotFoundException("找不到存檔，請確定同目錄下存在" + savePath + "檔案！");
-        FileInputStream saveFI = new FileInputStream(saveFile);
-        int saveFileLength = (int)(saveFile.length());
-        if(saveFileLength < savePrefix.length + medicsLengthSpace)
-            throw new FileNotFoundException("非正確存檔格式，請確定" + savePath + "為本程式產生的存檔！");
-        ByteBuffer loadByteBuf = ByteBuffer.allocate(saveFileLength);
-        loadByteBuf.clear();
-        FileChannel loadChannel = saveFI.getChannel();
-        while(loadChannel.read(loadByteBuf) > 0);
-        loadChannel.close();
-        saveFI.close();
+        ByteBuffer loadByteBuf;
+        int saveFileLength;
+        try(FileInputStream saveFI = new FileInputStream(saveFile))
+        {
+            saveFileLength = (int)(saveFile.length());
+            if(saveFileLength < savePrefix.length + medicsLengthSpace)
+                throw new FileNotFoundException("非正確存檔格式，請確定" + savePath + "為本程式產生的存檔！");
+            loadByteBuf = ByteBuffer.allocate(saveFileLength);
+            loadByteBuf.clear();
+            try(FileChannel loadChannel = saveFI.getChannel())
+            {
+                while(loadChannel.read(loadByteBuf) > 0);
+            }
+        }
         loadByteBuf.flip();
         byte savePrefixCheck[] = new byte[savePrefix.length];
         loadByteBuf.get(savePrefixCheck);
