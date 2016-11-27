@@ -2,11 +2,14 @@ import javafx.application.Application;
 import javafx.collections.ObservableList;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
+import javafx.geometry.Insets;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.Tab;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -15,6 +18,7 @@ import javafx.scene.layout.TilePane;
 import javafx.scene.text.Text;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
@@ -24,6 +28,7 @@ class MedicStatusBox extends HBox
     private MedicalPersonnel medic;
     private Image medicImage;
     private Text jobNameText, staminaText, statusText, waitTurnText;
+    private ProgressBar staminaBar;
     public MedicStatusBox(MedicalPersonnel medic, int index)
     {
         super();
@@ -35,8 +40,9 @@ class MedicStatusBox extends HBox
         staminaText = new Text();
         statusText = new Text();
         waitTurnText = new Text();
+        staminaBar = new ProgressBar();
         statusUpdate();
-        VBox textBox = new VBox(jobNameText, staminaText, statusText, waitTurnText);
+        VBox textBox = new VBox(jobNameText, staminaText, staminaBar, statusText, waitTurnText);
         getChildren().addAll(medicImageView, textBox);
     }
     public void statusUpdate()
@@ -47,6 +53,7 @@ class MedicStatusBox extends HBox
         else
             stamina = Integer.toString(medic.getStamina()) + "/" + Integer.toString(medic.getMaxStamina());
         staminaText.textProperty().setValue("體力：" + stamina);
+        staminaBar.setProgress(medic.getStamina()/(double)(medic.getMaxStamina()));
         statusText.textProperty().setValue("狀態：" + medic.getStatusString());
         int waitTurn = medic.getWaitTurn();
         if(waitTurn == 0)
@@ -71,7 +78,6 @@ class MedicPane extends TilePane
             getChildren().add(medicStats[i]);
         }
         setPrefTileWidth(prefStatusWidth);
-        setPrefColumns(5);
     }
     public void paneUpdate()
     {
@@ -109,7 +115,10 @@ class MedicTab extends Tab
             default:
         }
         medicPane = new MedicPane(nckuHospital.getMedicList(jobName));
-        setContent(medicPane);
+        ScrollPane scroll = new ScrollPane(medicPane);
+        scroll.setPrefViewportWidth(medicPane.getTileWidth()*medicPane.getPrefColumns());
+        scroll.setFitToWidth(true);
+        setContent(scroll);
         setClosable(false);
     }
     public void tabUpdate()
@@ -119,7 +128,7 @@ class MedicTab extends Tab
 }
 public class HospitalGUI extends Application
 {
-    private final double therapySpace = 20.0, buttonSpace = 5.0;
+    private final double therapySpace = 20.0, buttonSpace = 5.0, marginSpace = 10.0;
     private static Hospital hospitalObj;
     private Hospital hospital;
 
@@ -132,25 +141,38 @@ public class HospitalGUI extends Application
         for(int i=0; i < medictabs.length; i++)
             medictabs[i] = new MedicTab(hospital, medicJobNames[i]);
         TabPane hospitalPane = new TabPane(medictabs[0], medictabs[1], medictabs[2], medictabs[3]);
+        Text dealInfo = new Text("這裡正上演的是醫院悠閒喜劇……才怪");
+        dealInfo.setStyle("-fx-font-size: 14pt;");
+        Text therapyTip = new Text("治療方法：");
         ObservableList<String> therapy = FXCollections.observableArrayList("medical", "wrap", "surgery", "chemotherapy", "emergency-surgery", "first-aid");
         ComboBox<String> therapyComboBox = new ComboBox<String>(therapy);
         Button therapyConfirmButton = new Button("確定執行");
         therapyConfirmButton.setOnMouseClicked(event -> {
-            hospital.dealWithIllness(therapyComboBox.getValue());
-            hospital.turnOver();
-            for(MedicTab medictab:medictabs)
-                medictab.tabUpdate();
+            String inputTherapy = therapyComboBox.getValue();
+            if(inputTherapy != null)
+            {
+                if(hospital.dealWithIllness(inputTherapy))
+                    dealInfo.setText("成功的進行了[" + inputTherapy + "]，醫師又再度的暴肝了");
+                else
+                    dealInfo.setText("因為人手不足，無法進行[" + inputTherapy + "]，可能得請轉院治療了");
+                hospital.turnOver();
+                for(MedicTab medictab:medictabs)
+                    medictab.tabUpdate();
+            }
         });
-        HBox therapyBox = new HBox(20.0, therapyComboBox, therapyConfirmButton);
+        HBox therapyBox = new HBox(20.0, therapyTip, therapyComboBox, therapyConfirmButton);
         therapyBox.setAlignment(Pos.CENTER);
         Button saveButton = new Button("儲存狀態");
         Button loadButton = new Button("讀取狀態");
         setSLButton(saveButton, loadButton, stage);
         HBox functionalButtonBox = new HBox(buttonSpace, saveButton, loadButton);
-        VBox hospitalPageBox = new VBox(hospitalPane, therapyBox, functionalButtonBox);
+        VBox hospitalPageBox = new VBox(hospitalPane, dealInfo, therapyBox, functionalButtonBox);
+        VBox.setMargin(functionalButtonBox, new Insets(marginSpace));
+        hospitalPageBox.setAlignment(Pos.TOP_CENTER);
         Scene scene = new Scene(hospitalPageBox);
         stage.setScene(scene);
         stage.setTitle("果然我的醫院悠閒喜劇搞錯了。");
+        stage.getIcons().add(new Image("img/Hospital.png"));
         stage.show();
     }
     private void setSLButton(Button saveButton, Button loadButton, Stage stage)
@@ -184,10 +206,10 @@ public class HospitalGUI extends Application
             try
             {
                 hospitalObj = Hospital.loadHospital();
+                start(stage);
                 slCompleteAlert.setTitle("讀取遊戲");
                 slCompleteAlert.setContentText("讀取完成！");
                 slCompleteAlert.showAndWait();
-                start(stage);
             }
             catch(FileNotFoundException e)
             {
