@@ -3,6 +3,10 @@ import javafx.collections.ObservableList;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.geometry.Insets;
+import javafx.animation.Timeline;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.util.Duration;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.ScrollPane;
@@ -22,13 +26,37 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
+class StaminaBar extends ProgressBar
+{
+    private static final String hpBarColors[] = {"low-hp", "medium-hp", "high-hp"};
+    public StaminaBar()
+    {
+        super();
+        getStylesheets().add(getClass().getResource("StaminaBar.css").toExternalForm());
+        this.progressProperty().addListener((observable, oldValue, newValue) -> {
+            double stamina = (newValue == null)?-1.0:newValue.doubleValue();
+            if(stamina <= 0.25)
+                setBarStyle(hpBarColors[0]);
+            else if(stamina <= 0.5)
+                setBarStyle(hpBarColors[1]);
+            else
+                setBarStyle(hpBarColors[2]);
+        });
+    }
+    public void setBarStyle(String style)
+    {
+        getStyleClass().removeAll(hpBarColors);
+        getStyleClass().add(style);
+    }
+}
 class MedicStatusBox extends HBox
 {
     private int index;
     private MedicalPersonnel medic;
     private Image medicImage;
     private Text jobNameText, staminaText, statusText, waitTurnText;
-    private ProgressBar staminaBar;
+    private StaminaBar staminaBar;
+    private Timeline staminaTimeline;
     public MedicStatusBox(MedicalPersonnel medic, int index)
     {
         super();
@@ -40,7 +68,8 @@ class MedicStatusBox extends HBox
         staminaText = new Text();
         statusText = new Text();
         waitTurnText = new Text();
-        staminaBar = new ProgressBar();
+        staminaBar = new StaminaBar();
+        staminaTimeline = new Timeline();
         statusUpdate();
         VBox textBox = new VBox(jobNameText, staminaText, staminaBar, statusText, waitTurnText);
         getChildren().addAll(medicImageView, textBox);
@@ -53,13 +82,18 @@ class MedicStatusBox extends HBox
         else
             stamina = Integer.toString(medic.getStamina()) + "/" + Integer.toString(medic.getMaxStamina());
         staminaText.textProperty().setValue("體力：" + stamina);
-        staminaBar.setProgress(medic.getStamina()/(double)(medic.getMaxStamina()));
+        double nowStaminaPercent = medic.getStamina()/(double)(medic.getMaxStamina());
+        staminaTimeline.getKeyFrames().setAll(
+            new KeyFrame(Duration.millis(0.0), new KeyValue(staminaBar.progressProperty(), staminaBar.getProgress())),
+            new KeyFrame(Duration.millis(100.0), new KeyValue(staminaBar.progressProperty(), nowStaminaPercent))
+        );
         statusText.textProperty().setValue("狀態：" + medic.getStatusString());
         int waitTurn = medic.getWaitTurn();
         if(waitTurn == 0)
             waitTurnText.textProperty().setValue(null);
         else
             waitTurnText.textProperty().setValue("[尚需" + waitTurn + "回合]");
+        staminaTimeline.playFromStart();
     }
 }
 class MedicPane extends TilePane
