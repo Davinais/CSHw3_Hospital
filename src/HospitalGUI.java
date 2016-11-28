@@ -6,7 +6,10 @@ import javafx.geometry.Insets;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.Interpolator;
+import javafx.beans.property.*;
 import javafx.util.Duration;
+import javafx.scene.paint.Color;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.ScrollPane;
@@ -28,25 +31,41 @@ import java.io.FileNotFoundException;
 
 class StaminaBar extends ProgressBar
 {
-    private static final String hpBarColors[] = {"low-hp", "medium-hp", "high-hp"};
-    public StaminaBar()
+    private ObjectProperty<Color> barColor;
+    private StringProperty colorString = new SimpleStringProperty();
+    public StaminaBar(double staminaRate)
     {
-        super();
-        getStylesheets().add(getClass().getResource("StaminaBar.css").toExternalForm());
-        this.progressProperty().addListener((observable, oldValue, newValue) -> {
-            double stamina = (newValue == null)?-1.0:newValue.doubleValue();
-            if(stamina <= 0.25)
-                setBarStyle(hpBarColors[0]);
-            else if(stamina <= 0.5)
-                setBarStyle(hpBarColors[1]);
-            else
-                setBarStyle(hpBarColors[2]);
-        });
+        super(staminaRate);
+        barColor = new SimpleObjectProperty<>(getBarColor(staminaRate));
+        setColorStringFromColor(colorString, barColor);
+        barColor.addListener((observable, oldColor, newColor) -> setColorStringFromColor(colorString, barColor));
+        this.styleProperty().bind(new SimpleStringProperty("-fx-accent: ").concat(colorString));
     }
-    public void setBarStyle(String style)
+    private void setColorStringFromColor(StringProperty colorS, ObjectProperty<Color> color)
     {
-        getStyleClass().removeAll(hpBarColors);
-        getStyleClass().add(style);
+        colorS.set(
+            "rgba(" +
+            (int)(color.get().getRed()*255) + "," +
+            (int)(color.get().getGreen()*255) + "," +
+            (int)(color.get().getBlue()*255) + "," +
+            color.get().getOpacity() +
+            ");"
+        );
+    }
+    public ObjectProperty<Color> barColorProperty()
+    {
+        return barColor;
+    }
+    public Color getBarColor(double staminaRate)
+    {
+        if(staminaRate <= 0.25)
+            return Color.RED;
+        else if(staminaRate <= 0.5)
+            return Color.ORANGE;
+        else if(staminaRate <= 0.75)
+            return Color.rgb(255, 234, 93); //#F7DE13，其實用0xF7, 0xDE, 0x13做輸入也是可以的
+        else
+            return Color.LIGHTGREEN;
     }
 }
 class MedicStatusBox extends HBox
@@ -68,7 +87,7 @@ class MedicStatusBox extends HBox
         staminaText = new Text();
         statusText = new Text();
         waitTurnText = new Text();
-        staminaBar = new StaminaBar();
+        staminaBar = new StaminaBar(1.0);
         staminaTimeline = new Timeline();
         statusUpdate();
         VBox textBox = new VBox(jobNameText, staminaText, staminaBar, statusText, waitTurnText);
@@ -84,8 +103,10 @@ class MedicStatusBox extends HBox
         staminaText.textProperty().setValue("體力：" + stamina);
         double nowStaminaPercent = medic.getStamina()/(double)(medic.getMaxStamina());
         staminaTimeline.getKeyFrames().setAll(
-            new KeyFrame(Duration.millis(0.0), new KeyValue(staminaBar.progressProperty(), staminaBar.getProgress())),
-            new KeyFrame(Duration.millis(100.0), new KeyValue(staminaBar.progressProperty(), nowStaminaPercent))
+            new KeyFrame(Duration.millis(0.0), new KeyValue(staminaBar.progressProperty(), staminaBar.getProgress()),
+                new KeyValue(staminaBar.barColorProperty(), staminaBar.getBarColor(staminaBar.getProgress()), Interpolator.LINEAR)),
+            new KeyFrame(Duration.millis(250.0), new KeyValue(staminaBar.progressProperty(), nowStaminaPercent),
+                new KeyValue(staminaBar.barColorProperty(), staminaBar.getBarColor(nowStaminaPercent), Interpolator.LINEAR))
         );
         statusText.textProperty().setValue("狀態：" + medic.getStatusString());
         int waitTurn = medic.getWaitTurn();
