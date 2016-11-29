@@ -40,7 +40,7 @@ public class Hospital
     {
         final int statusPerRow = 6;
         int lineNeeded = (int)(Math.ceil((surgeons.length+physicians.length+nurses.length+anesthetists.length)/(statusPerRow*1.0)))*5+1;
-        String separateLine = new String(new char[80]).replace("\0", "-");
+        String separateLine = new String(new char[79]).replace("\0", "-");
         StringBuilder statusBuf[] = new StringBuilder[lineNeeded];
         for(int i=0; i < lineNeeded; i++)
             statusBuf[i] = new StringBuilder();
