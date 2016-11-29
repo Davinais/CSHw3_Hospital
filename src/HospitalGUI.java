@@ -38,11 +38,14 @@ class StaminaBar extends ProgressBar
         super(staminaRate);
         barColor = new SimpleObjectProperty<>(getBarColor(staminaRate));
         setColorStringFromColor(colorString, barColor);
+        //設立一Listener使得顏色屬性產生變化時，字串屬性同樣會變化
         barColor.addListener((observable, oldColor, newColor) -> setColorStringFromColor(colorString, barColor));
+        //將此體力條的樣式屬性綁定字串屬性，則其顏色即會跟著字串屬性變化時變化
         this.styleProperty().bind(new SimpleStringProperty("-fx-accent: ").concat(colorString));
     }
     private void setColorStringFromColor(StringProperty colorS, ObjectProperty<Color> color)
     {
+        //將顏色屬性轉變成rgba屬性並放入字串屬性中
         colorS.set(
             "rgba(" +
             (int)(color.get().getRed()*255) + "," +
@@ -58,12 +61,13 @@ class StaminaBar extends ProgressBar
     }
     public Color getBarColor(double staminaRate)
     {
+        //分別設立每個區段時體力條的顏色
         if(staminaRate <= 0.25)
             return Color.RED;
         else if(staminaRate <= 0.5)
             return Color.ORANGE;
         else if(staminaRate <= 0.75)
-            return Color.rgb(255, 234, 93); //#F7DE13，其實用0xF7, 0xDE, 0x13做輸入也是可以的
+            return Color.rgb(255, 234, 93); //#FFEA5D，其實用0xFF, 0xEA, 0x5D做輸入也是可以的
         else
             return Color.LIGHTGREEN;
     }
@@ -81,6 +85,7 @@ class MedicStatusBox extends HBox
         super();
         this.medic = medic;
         this.index = index;
+        //獲得職業圖像
         medicImage = new Image("img/" + medic.getJobName() + ".png");
         ImageView medicImageView = new ImageView(medicImage);
         jobNameText = new Text(medic.getJobName() + index);
@@ -102,6 +107,7 @@ class MedicStatusBox extends HBox
             stamina = Integer.toString(medic.getStamina()) + "/" + Integer.toString(medic.getMaxStamina());
         staminaText.textProperty().setValue("體力：" + stamina);
         double nowStaminaPercent = medic.getStamina()/(double)(medic.getMaxStamina());
+        //設立動畫事件，關鍵影格的關鍵值分別是其體力比值以及其顏色，其中顏色採線性變化
         staminaTimeline.getKeyFrames().setAll(
             new KeyFrame(Duration.millis(0.0), new KeyValue(staminaBar.progressProperty(), staminaBar.getProgress()),
                 new KeyValue(staminaBar.barColorProperty(), staminaBar.getBarColor(staminaBar.getProgress()), Interpolator.LINEAR)),
@@ -110,10 +116,12 @@ class MedicStatusBox extends HBox
         );
         statusText.textProperty().setValue("狀態：" + medic.getStatusString());
         int waitTurn = medic.getWaitTurn();
+        //若等待回合為0，不顯示
         if(waitTurn == 0)
             waitTurnText.textProperty().setValue(null);
         else
             waitTurnText.textProperty().setValue("[尚需" + waitTurn + "回合]");
+        //播放動畫
         staminaTimeline.playFromStart();
     }
 }
@@ -170,8 +178,11 @@ class MedicTab extends Tab
             default:
         }
         medicPane = new MedicPane(nckuHospital.getMedicList(jobName));
+        //建立捲動面板，會在視窗大小小於TilePane時出現捲動條
         ScrollPane scroll = new ScrollPane(medicPane);
+        //使初始捲動面板的Viewport寬度與TilePane寬度吻合，如此便不會出現水平捲動軸
         scroll.setPrefViewportWidth(medicPane.getTileWidth()*medicPane.getPrefColumns());
+        //使TilePane寬度會跟著捲動面板的Viewport寬度做變化，如此便不會出現水平捲動軸
         scroll.setFitToWidth(true);
         setContent(scroll);
         setClosable(false);

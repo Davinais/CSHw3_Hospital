@@ -38,18 +38,24 @@ public class Hospital
     public void printStatus()
     {
         final int statusPerRow = 6;
+        //計算所需要的總行數
         int lineNeeded = (int)(Math.ceil((surgeons.length+physicians.length+nurses.length+anesthetists.length)/(statusPerRow*1.0)))*5+1;
+        //做出分隔線字串，以取代char陣列中的null為"-"的方式實現
         String separateLine = new String(new char[79]).replace("\0", "-");
         StringBuilder statusBuf[] = new StringBuilder[lineNeeded];
         for(int i=0; i < lineNeeded; i++)
             statusBuf[i] = new StringBuilder();
+        //將對應為分隔線行數的StringBuilder存入分隔線字串
         for(int i=0; i < lineNeeded; i+=5)
             statusBuf[i].append(separateLine);
+        //將目前處理中醫師的座標初始化為(0, 0)
         int nowPos[] = {0, 0};
+        //分別處理四類醫師中每位醫生的狀態字串
         formatStatusStringByMedics(surgeons, statusBuf, nowPos);
         formatStatusStringByMedics(physicians, statusBuf, nowPos);
         formatStatusStringByMedics(nurses, statusBuf, nowPos);
         formatStatusStringByMedics(anesthetists, statusBuf, nowPos);
+        //輸出字串
         for(int line=0; line < statusBuf.length; line++)
             System.out.println(statusBuf[line].toString());
     }
@@ -58,7 +64,9 @@ public class Hospital
         int space = 13;
         for(int i=0; i < medics.length; i++)
         {
+            //計算此醫師的字串要從第幾行開始
             int lineSkip = nowPos[0]*5;
+            //以下皆使用stringPadding()進行排版，確保最後的字串長度都與space相同，值得注意的是中文字算雙字元長，而半形英文字母或數字則為單字元長
             statusBuf[lineSkip+1].append(StringTools.stringPadding(medics[i].getJobName() + (i+1), space));
             if(medics[i].isExhausted())
                 statusBuf[lineSkip+2].append(StringTools.stringPadding("體力:透支", space));
@@ -66,11 +74,14 @@ public class Hospital
                 statusBuf[lineSkip+2].append(StringTools.stringPadding("體力:" + medics[i].getStamina() + "/" + medics[i].getMaxStamina(), space));
             statusBuf[lineSkip+3].append(StringTools.stringPadding("狀態:" + medics[i].getStatusString(), space));
             int waitTurn = medics[i].getWaitTurn();
+            //若等待的回合數>0，則顯示出來
             if(waitTurn > 0)
                 statusBuf[lineSkip+4].append(StringTools.stringPadding("[尚需" + waitTurn + "回合]", space));
             else
                 statusBuf[lineSkip+4].append(StringTools.stringPadding("", space));
+            //座標欄位數+1
             nowPos[1]++;
+            //當座標欄位超過每列應有欄位時，將座標設定為下一列的最初始欄位
             if(nowPos[1] >= 6)
             {
                 nowPos[0]++;
@@ -100,22 +111,33 @@ public class Hospital
     }
     public void saveHospital() throws IOException
     {
+        //檢查檔案是否存在，若否，則建立新檔案
         if(!saveFile.exists())
             saveFile.createNewFile();
+        //建立byte緩衝區，並且分配其大小與應儲存資料大小相等
         ByteBuffer saveByteBuf = ByteBuffer.allocate(savePrefix.length+medicsLengthSpace+(surgeons.length+physicians.length+nurses.length+anesthetists.length)*medicNeededSaveDataNum);
+        //為保險，先清除緩衝區資料
         saveByteBuf.clear();
+        //將存檔前綴放入緩衝區
         saveByteBuf.put(savePrefix);
+        //取得各類醫師的人數並轉型為byte
         byte medicsLength[] = {(byte)surgeons.length, (byte)physicians.length, (byte)nurses.length, (byte)anesthetists.length};
+        //將醫師人數放入緩衝區
         saveByteBuf.put(medicsLength);
+        //以下分別將四類醫師中每位醫師個別的資料放入緩衝區
         saveToByteBuffer(surgeons, saveByteBuf);
         saveToByteBuffer(physicians, saveByteBuf);
         saveToByteBuffer(nurses, saveByteBuf);
         saveToByteBuffer(anesthetists, saveByteBuf);
+        //將緩衝區指標歸為初始，並且將其limit設在有儲存資料的緩衝區結尾
         saveByteBuf.flip();
+        //建立檔案輸出流
         try(FileOutputStream saveFO = new FileOutputStream(saveFile))
         {
+            //建立檔案溝通頻道
             try(FileChannel saveChannel = saveFO.getChannel())
             {
+                //當緩衝區還有資料未存入時，將其寫入檔案
                 while(saveByteBuf.hasRemaining())
                     saveChannel.write(saveByteBuf);
             }
@@ -126,41 +148,58 @@ public class Hospital
     {
         for(MedicalPersonnel medic:medics)
         {
+            //以下三行將boolean值以 0=false, 1=true 的方式儲存
             byte idle = (byte)((medic.isIdle())?1:0);
             byte exhausted = (byte)((medic.isExhausted())?1:0);
             byte haveExhausted = (byte)((medic.haveBeenExhausted())?1:0);
+            //取得醫師的所有資料欄位，並且強制轉型到byte並存放到陣列中，由於在本作業中的數字皆不會超過128，因此不用擔心overflow的問題
             byte saveData[] = {(byte)(medic.getStamina()), (byte)(medic.getBusyTurn()), (byte)(medic.getExhaustedTurn()), idle, exhausted, haveExhausted};
+            //將資料放入緩衝區
             saveByteBuf.put(saveData);
         }
     }
     public static Hospital loadHospital() throws IOException, FileNotFoundException
     {
+        //檢查檔案是否存在，若否，則拋出檔案不存在例外
         if(!saveFile.exists())
             throw new FileNotFoundException("找不到存檔，請確定同目錄下存在" + savePath + "檔案！");
         ByteBuffer loadByteBuf;
         int saveFileLength;
+        //建立檔案輸入流
         try(FileInputStream saveFI = new FileInputStream(saveFile))
         {
+            //將檔案的位元組大小存入變數中
             saveFileLength = (int)(saveFile.length());
+            //若檔案位元組大小比存檔前綴的長度+儲存醫師人數的長度還小，即比8小時，此檔案必定為錯誤格式，此時拋出檔案不存在例外
             if(saveFileLength < savePrefix.length + medicsLengthSpace)
                 throw new FileNotFoundException("非正確存檔格式，請確定" + savePath + "為本程式產生的存檔！");
+            //建立byte緩衝區，並且分配其大小與存檔大小相等
             loadByteBuf = ByteBuffer.allocate(saveFileLength);
             loadByteBuf.clear();
+            //建立檔案溝通頻道
             try(FileChannel loadChannel = saveFI.getChannel())
             {
+                //一口氣將檔案讀完
                 while(loadChannel.read(loadByteBuf) > 0);
             }
         }
+        //將緩衝區指標歸為初始，並且將其limit設在有儲存資料的緩衝區結尾
         loadByteBuf.flip();
+        //建立一byte陣列，用來讀取前四碼存檔前綴
         byte savePrefixCheck[] = new byte[savePrefix.length];
         loadByteBuf.get(savePrefixCheck);
+        //若存檔前綴不相等，即為錯誤格式，拋出檔案不存在例外
         if(!(Arrays.equals(savePrefix, savePrefixCheck)))
             throw new FileNotFoundException("非正確存檔格式，請確定" + savePath + "為本程式產生的存檔！");
+        //建立一byte陣列，用來讀取各類醫師人數
         byte medicsLength[] = new byte[4];
         loadByteBuf.get(medicsLength);
+        //若是將存檔前綴的大小4+儲存醫師人數的大小4再加上總醫師人數乘上每位醫師應儲存資料大小的加總不等於檔案大小時，代表有多餘或缺失的訊息，為錯誤格式，拋出檔案不存在例外
         if(saveFileLength != (savePrefix.length+medicsLengthSpace+(medicsLength[0]+medicsLength[1]+medicsLength[2]+medicsLength[3])*medicNeededSaveDataNum))
             throw new FileNotFoundException("非正確存檔格式，請確定" + savePath + "為本程式產生的存檔！");
+        //建立醫院物件，參數為各類醫師人數
         Hospital hospital = new Hospital(medicsLength[0], medicsLength[1], medicsLength[2], medicsLength[3]);
+        //將每位醫師的資料分別讀回醫療人員物件中
         hospital.loadFromByteBuffer(hospital.surgeons, loadByteBuf);
         hospital.loadFromByteBuffer(hospital.physicians, loadByteBuf);
         hospital.loadFromByteBuffer(hospital.nurses, loadByteBuf);
@@ -172,11 +211,14 @@ public class Hospital
     {
         for(MedicalPersonnel medic:medics)
         {
+            //建立一byte陣列，用來讀取醫師資料
             byte saveData[] = new byte[medicNeededSaveDataNum];
             loadByteBuf.get(saveData);
+            //將被轉化為0與1的boolean值轉回boolean
             boolean idle = (saveData[3] == (byte)1);
             boolean exhausted = (saveData[4] == (byte)1);
             boolean haveExhausted = (saveData[5] == (byte)1);
+            //將讀取的資料存放進醫師物件的資料欄位中
             medic.readToStatus(saveData[0], saveData[1], saveData[2], idle, exhausted, haveExhausted);
         }
     }
@@ -267,6 +309,7 @@ public class Hospital
             {
                 MedicalPersonnel physicianexe[] = getAvaliableMedics(physicians, 1, "看診", false);
                 MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 1, "一般照護", false);
+                //若陣列物件皆非null，代表可執行此治療手段
                 if(physicianexe != null && nurseexe != null)
                 {
                     executeByMedics(physicianexe, "看診");
@@ -279,6 +322,7 @@ public class Hospital
             {
                 MedicalPersonnel surgeonexe[] = getAvaliableMedics(surgeons, 1, "看診", false);
                 MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 1, "一般照護", false);
+                //若陣列物件皆非null，代表可執行此治療手段
                 if(surgeonexe != null && nurseexe != null)
                 {
                     executeByMedics(surgeonexe, "看診");
@@ -292,6 +336,7 @@ public class Hospital
                 MedicalPersonnel surgeonexe[] = getAvaliableMedics(surgeons, 1, "手術", false);
                 MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 3, "手術照護", false);
                 MedicalPersonnel anesthetistexe[] = getAvaliableMedics(anesthetists, 1, "麻醉", false);
+                //若陣列物件皆非null，代表可執行此治療手段
                 if(surgeonexe != null && nurseexe != null && anesthetistexe != null)
                 {
                     executeByMedics(surgeonexe, "手術");
@@ -305,6 +350,7 @@ public class Hospital
             {
                 MedicalPersonnel physicianexe[] = getAvaliableMedics(physicians, 1, "內科治療", false);
                 MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 1, "一般照護", false);
+                //若陣列物件皆非null，代表可執行此治療手段
                 if(physicianexe != null && nurseexe != null)
                 {
                     executeByMedics(physicianexe, "內科治療");
@@ -318,6 +364,7 @@ public class Hospital
                 MedicalPersonnel surgeonexe[] = getAvaliableMedics(surgeons, 1, "手術", true);
                 MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 3, "手術照護", true);
                 MedicalPersonnel anesthetistexe[] = getAvaliableMedics(anesthetists, 1, "麻醉", true);
+                //若陣列物件皆非null，代表可執行此治療手段
                 if(surgeonexe != null && nurseexe != null && anesthetistexe != null)
                 {
                     executeByMedics(surgeonexe, "手術");
@@ -331,6 +378,7 @@ public class Hospital
             {
                 MedicalPersonnel physicianexe[] = getAvaliableMedics(physicians, 1, "急救治療", true);
                 MedicalPersonnel nurseexe[] = getAvaliableMedics(nurses, 2, "一般照護", true);
+                //若陣列物件皆非null，代表可執行此治療手段
                 if(physicianexe != null && nurseexe != null)
                 {
                     executeByMedics(physicianexe, "急救治療");
