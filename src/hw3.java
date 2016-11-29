@@ -32,7 +32,7 @@ public class hw3
             notFoundTherapyMessage += "\n若是想進行指令，請輸入【" + cmdPrefix + "help】確認想輸入的指令";
         }
         printHelp(cmdPrefix, avaliableTherapy);
-        
+
         MainHospital:
         while(true)
         {
@@ -77,6 +77,7 @@ public class hw3
                         System.out.println("結束GUI介面，治療完成～");
                         break MainHospital;
                     default:
+                        System.out.println("不好意思，找不到輸入的指令喔！\n輸入【" + cmdPrefix + "help】來確認想輸入的指令吧！");
                 }
             }
             else if(therapy.equals("game over"))
