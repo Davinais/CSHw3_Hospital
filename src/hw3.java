@@ -32,6 +32,8 @@ public class hw3
             notFoundTherapyMessage += "\n若是想進行指令，請輸入【" + cmdPrefix + "help】確認想輸入的指令";
         }
         printHelp(cmdPrefix, avaliableTherapy);
+        
+        MainHospital:
         while(true)
         {
             nckuHospital.printStatus();
@@ -40,40 +42,41 @@ public class hw3
             if(therapy.startsWith(cmdPrefix))
             {
                 therapy = therapy.substring(cmdPrefix.length());
-                if(therapy.equals("help"))
-                    printHelp(cmdPrefix, avaliableTherapy);
-                else if(therapy.equals("save"))
+                switch(therapy)
                 {
-                    try
-                    {
-                        nckuHospital.saveHospital();
-                    }
-                    catch(IOException e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
-                else if(therapy.equals("load"))
-                {
-                    try
-                    {
-                        nckuHospital = Hospital.loadHospital();
-                    }
-                    catch(FileNotFoundException e)
-                    {
-                        System.out.println(e.getMessage());
-                    }
-                    catch(IOException e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
-                else if(therapy.equals("gui"))
-                {
-                    HospitalGUI.setHospital(nckuHospital);
-                    HospitalGUI.launch(HospitalGUI.class);
-                    System.out.println("結束GUI介面，治療完成～");
-                    break;
+                    case "help":
+                        printHelp(cmdPrefix, avaliableTherapy);
+                        break;
+                    case "save":
+                        try
+                        {
+                            nckuHospital.saveHospital();
+                        }
+                        catch(IOException e)
+                        {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case "load":
+                        try
+                        {
+                            nckuHospital = Hospital.loadHospital();
+                        }
+                        catch(FileNotFoundException e)
+                        {
+                            System.out.println(e.getMessage());
+                        }
+                        catch(IOException e)
+                        {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case "gui":
+                        HospitalGUI.setHospital(nckuHospital);
+                        HospitalGUI.launch(HospitalGUI.class);
+                        System.out.println("結束GUI介面，治療完成～");
+                        break MainHospital;
+                    default:
                 }
             }
             else if(therapy.equals("game over"))
