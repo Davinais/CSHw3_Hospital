@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
-import java.nio.charset.Charset;
 
 public class Hospital
 {
@@ -60,17 +59,17 @@ public class Hospital
         for(int i=0; i < medics.length; i++)
         {
             int lineSkip = nowPos[0]*5;
-            statusBuf[lineSkip+1].append(stringPadding(medics[i].getJobName() + (i+1), space));
+            statusBuf[lineSkip+1].append(StringTools.stringPadding(medics[i].getJobName() + (i+1), space));
             if(medics[i].isExhausted())
-                statusBuf[lineSkip+2].append(stringPadding("體力:透支", space));
+                statusBuf[lineSkip+2].append(StringTools.stringPadding("體力:透支", space));
             else
-                statusBuf[lineSkip+2].append(stringPadding("體力:" + medics[i].getStamina() + "/" + medics[i].getMaxStamina(), space));
-            statusBuf[lineSkip+3].append(stringPadding("狀態:" + medics[i].getStatusString(), space));
+                statusBuf[lineSkip+2].append(StringTools.stringPadding("體力:" + medics[i].getStamina() + "/" + medics[i].getMaxStamina(), space));
+            statusBuf[lineSkip+3].append(StringTools.stringPadding("狀態:" + medics[i].getStatusString(), space));
             int waitTurn = medics[i].getWaitTurn();
             if(waitTurn > 0)
-                statusBuf[lineSkip+4].append(stringPadding("[尚需" + waitTurn + "回合]", space));
+                statusBuf[lineSkip+4].append(StringTools.stringPadding("[尚需" + waitTurn + "回合]", space));
             else
-                statusBuf[lineSkip+4].append(stringPadding("", space));
+                statusBuf[lineSkip+4].append(StringTools.stringPadding("", space));
             nowPos[1]++;
             if(nowPos[1] >= 6)
             {
@@ -78,15 +77,6 @@ public class Hospital
                 nowPos[1] = 0;
             }
         }
-    }
-    public String stringPadding(String s, int space)
-    {
-        int spaceNeeded = space - s.getBytes(Charset.forName("Big5")).length;
-        if(spaceNeeded <= 0)
-            return s;
-        for(int i=0; i < spaceNeeded; i++)
-            s += " ";
-        return s;
     }
     public int[] getMedicNumber()
     {
