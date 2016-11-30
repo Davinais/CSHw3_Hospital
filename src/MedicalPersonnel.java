@@ -76,7 +76,12 @@ public abstract class MedicalPersonnel
     public String getStatusString()
     {
         if(exhausted)
-            return "透支";
+        {
+            if(idle)
+                return "透支";
+            else
+                return "忙碌";
+        }
         else if(idle)
             return "閒置";
         else
