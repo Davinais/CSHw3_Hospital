@@ -38,6 +38,7 @@ class StaminaBar extends ProgressBar
         super(staminaRate);
         barColor = new SimpleObjectProperty<>(getBarColor(staminaRate));
         setColorStringFromColor(colorString, barColor);
+        //參考自stackoverflow
         //設立一Listener使得顏色屬性產生變化時，字串屬性同樣會變化
         barColor.addListener((observable, oldColor, newColor) -> setColorStringFromColor(colorString, barColor));
         //將此體力條的樣式屬性綁定字串屬性，則其顏色即會跟著字串屬性變化時變化
